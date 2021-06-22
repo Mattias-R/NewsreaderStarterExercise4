@@ -1,5 +1,7 @@
 package at.ac.fhcampuswien.newsapi;
 
+
+import at.ac.fhcampuswien.newsanalyzer.ctrl.NewsAPIException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import at.ac.fhcampuswien.newsapi.beans.NewsResponse;
@@ -9,6 +11,8 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.IllegalFormatException;
+
 
 public class NewsApi {
 
@@ -112,7 +116,7 @@ public class NewsApi {
         this.endpoint = endpoint;
     }
 
-    protected String requestData() {
+    protected String requestData() throws NewsAPIException {
         String url = buildURL();
         System.out.println("URL: " + url);
         URL obj = null;
@@ -121,6 +125,9 @@ public class NewsApi {
         } catch (MalformedURLException e) {
             // TODO improve ErrorHandling
             e.printStackTrace();
+        }catch (Exception e){
+            System.err.println("meine exepctoin");
+            throw new NewsAPIException(e.getMessage());
         }
         HttpURLConnection con;
         StringBuilder response = new StringBuilder();
@@ -134,15 +141,28 @@ public class NewsApi {
             in.close();
         } catch (IOException e) {
             // TODO improve ErrorHandling
-            System.out.println("Error "+e.getMessage());
+            System.err.println("Error "+e.getMessage());
+        }catch (Exception e){
+            System.err.println("meine exepctoin");
+            throw new NewsAPIException(e.getMessage());
         }
         return response.toString();
     }
 
-    protected String buildURL() {
+    protected String buildURL() throws NewsAPIException {
         // TODO ErrorHandling
-        String urlbase = String.format(NEWS_API_URL,getEndpoint().getValue(),getQ(),getApiKey());
-        StringBuilder sb = new StringBuilder(urlbase);
+        String urlbase = null;
+        StringBuilder sb = null;
+        try{
+            urlbase = String.format(NEWS_API_URL,getEndpoint().getValue(),getQ(),getApiKey());
+            sb = new StringBuilder(urlbase);
+        }catch(IllegalFormatException e){
+            System.err.println("ERROR " + e.getMessage());
+        }catch (Exception e){
+            System.err.println("meine exepctoin");
+            throw new NewsAPIException(e.getMessage());
+        }
+
 
         System.out.println(urlbase);
 
@@ -182,7 +202,7 @@ public class NewsApi {
         return sb.toString();
     }
 
-    public NewsResponse getNews() {
+    public NewsResponse getNews() throws NewsAPIException {
         NewsResponse newsReponse = null;
         String jsonResponse = requestData();
         if(jsonResponse != null && !jsonResponse.isEmpty()){
@@ -191,10 +211,13 @@ public class NewsApi {
             try {
                 newsReponse = objectMapper.readValue(jsonResponse, NewsResponse.class);
                 if(!"ok".equals(newsReponse.getStatus())){
-                    System.out.println("Error: "+newsReponse.getStatus());
+                    System.err.println("Error: "+newsReponse.getStatus());
                 }
             } catch (JsonProcessingException e) {
-                System.out.println("Error: "+e.getMessage());
+                System.err.println("Error: "+e.getMessage());
+            }catch (Exception e){
+                System.err.println("meine exepctoin");
+                throw new NewsAPIException(e.getMessage());
             }
         }
         //TODO improve Errorhandling

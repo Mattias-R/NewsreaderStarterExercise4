@@ -1,9 +1,6 @@
 package at.ac.fhcampuswien.newsanalyzer.downloader;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URL;
 import java.util.List;
 import java.util.Objects;
@@ -13,9 +10,9 @@ public abstract class Downloader {
     public static final String HTML_EXTENTION = ".html";
     public static final String DIRECTORY_DOWNLOAD = "./download/";
 
-    public abstract int process(List<String> urls);
+    public abstract int process(List<String> urls) throws DownloaderException;
 
-    public String saveUrl2File(String urlString) {
+    public String saveUrl2File(String urlString) throws DownloaderException {
         InputStream is = null;
         OutputStream os = null;
         String fileName = "";
@@ -34,9 +31,14 @@ public abstract class Downloader {
             while ((length = is.read(b)) != -1) {
                 os.write(b, 0, length);
             }
-        } catch (IOException e) {
+        }catch(FileNotFoundException e){
+            throw new DownloaderException(e.getMessage());
+        }catch (IOException e) {
             e.printStackTrace();
-        } finally {
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        finally {
             try {
                 Objects.requireNonNull(is).close();
                 Objects.requireNonNull(os).close();
